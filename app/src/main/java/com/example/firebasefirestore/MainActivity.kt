@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,14 +37,13 @@ class MainActivity : ComponentActivity() {
     @Preview
     @Composable
     fun Formulario() {
-
-
         var nome by remember { mutableStateOf(TextFieldValue()) }
         var endereco by remember { mutableStateOf(TextFieldValue()) }
         var bairro by remember { mutableStateOf(TextFieldValue()) }
         var cep by remember { mutableStateOf(TextFieldValue()) }
         var cidade by remember { mutableStateOf(TextFieldValue()) }
         var estado by remember { mutableStateOf(TextFieldValue()) }
+        var dadosLidos by remember { mutableStateOf("") }
 
         Column(
             modifier = Modifier
@@ -52,10 +52,7 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "CADASTRANDO DADOS",
-
-            )
+            Text(text = "CADASTRANDO DADOS")
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -65,8 +62,6 @@ class MainActivity : ComponentActivity() {
                 label = { Text("Nome") },
                 modifier = Modifier.fillMaxWidth()
             )
-
-
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -151,6 +146,52 @@ class MainActivity : ComponentActivity() {
             ) {
                 Text("Cadastrar Dados")
             }
+
+            Button(
+                onClick = {
+                    lerDadosDoFirebase { dados ->
+                        dadosLidos = dados
+                    }
+                },
+                modifier = Modifier.padding(bottom = 150.dp)
+            ) {
+                Text("Ler Dados")
+            }
+
+            Text(
+                text = dadosLidos,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
+    }
+
+    private fun lerDadosDoFirebase(callback: (String) -> Unit) {
+
+
+        firestore.collection("formulario")
+            .get()
+            .addOnSuccessListener { documents ->
+                val builder = StringBuilder()
+                for (document in documents) {
+                    val nome = document.getString("nome")
+                    val endereco = document.getString("endereco")
+                    val bairro = document.getString("bairro")
+                    val cep = document.getString("cep")
+                    val cidade = document.getString("cidade")
+                    val estado = document.getString("estado")
+
+
+                    builder.append("$nome, $endereco, $bairro, $cep, $cidade, $estado\n")
+                }
+
+
+                val dadosLidos = builder.toString()
+                callback(dadosLidos)
+
+            }
+            .addOnFailureListener { e ->
+
+            }
     }
 }
